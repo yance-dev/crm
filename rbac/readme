@@ -1,0 +1,141 @@
+使用rbac组件时，应用遵循以下规则：
+
+1. 清除rbac/migrations目录下所有数据库迁移记录（保留__init__.py）
+
+2. 在项目路由系统中注册rabc相关的路由信息，如：
+    urlpatterns = [
+        ...
+        url(r'^rbac/', include('rbac.urls',namespace='rbac')),
+    ]
+
+3. 注册app
+
+4. 让业务的用户表继承权限的UserInfo表
+    如：
+        rbac:
+            class UserInfo(models.Model):
+                """
+                用户表
+                """
+                username = models.CharField(verbose_name='用户名', max_length=32)
+                password = models.CharField(verbose_name='密码', max_length=64)
+                email = models.CharField(verbose_name='邮箱', max_length=32)
+                roles = models.ManyToManyField(verbose_name='拥有的所有角色', to=Role, blank=True)
+
+                class Meta:
+                    abstract = True
+        crm:
+            from rbac.models import UserInfo as RbacUserInfo
+            class UserInfo(RbacUserInfo):
+                """
+                员工表
+                """
+                name = models.CharField(verbose_name='真实姓名', max_length=16)
+                phone = models.CharField(verbose_name='手机号', max_length=32)
+
+                gender_choices = (
+                    (1,'男'),
+                    (2,'女'),
+                )
+                gender = models.IntegerField(verbose_name='性别',choices=gender_choices,default=1)
+
+                depart = models.ForeignKey(verbose_name='部门', to="Department")
+
+                def __str__(self):
+                    return self.name
+
+5. 数据库迁移
+
+6. rbac提供URL
+    urlpatterns = [
+        url(r'^menu/list/$', permission.menu_list, name='menu_list'), # rbac:menu_list
+        url(r'^menu/add/$', permission.menu_add, name='menu_add'),
+        url(r'^menu/edit/(?P<pk>\d+)/$', permission.menu_edit, name='menu_edit'),
+        url(r'^menu/del/(?P<pk>\d+)/$', permission.menu_del, name='menu_del'),
+        url(r'^permission/add/$', permission.permission_add, name='permission_add'),
+        url(r'^permission/edit/(?P<pk>\d+)/$', permission.permission_edit, name='permission_edit'),
+        url(r'^permission/del/(?P<pk>\d+)/$', permission.permission_del, name='permission_del'),
+
+        url(r'^multi/permissions/$', permission.multi_permissions, name='multi_permissions'),
+
+        url(r'^distribute/permissions/$', permission.distribute_permissions, name='distribute_permissions'),
+        url(r'^role/list/$', permission.role_list, name='role_list'),
+        url(r'^role/edit/(?P<pk>\d+)/$', permission.role_edit, name='role_edit'),
+        url(r'^role/del/(?P<pk>\d+)/$', permission.role_del, name='role_del'),
+    ]
+
+7. 配置文件写上用户表的类的路径
+    USER_MODEL_PATH = "crm.models.UserInfo"
+
+8. 录入权限信息
+    http://127.0.0.1:8000/rbac/menu/list/
+    http://127.0.0.1:8000/rbac/multi/permissions/?type=update
+
+9. 权限分配
+    创建角色：http://127.0.0.1:8000/rbac/role/list/
+	权限分配：http://127.0.0.1:8000/rbac/distribute/permissions/
+
+10. 权限验证+自动生成菜单
+    a.权限信息初始化
+        init_permission(user_obj,request)
+
+        MENU_SESSION_KEY = "u8fkksjdfkjsf"
+        PERMISSION_SESSION_KEY = "u8fkkfffffsjdfkjsf"
+
+    b.中间件请求进行权限校验
+        'rbac.middleware.rbac.RbacMiddleware'
+
+        PERMISSION_VALID_URL = [
+            '/login/',
+            '/admin/.*',
+        ]
+
+    c.inclusion_tag
+        {% load rbac %}
+        {% menu request %}
+        {% breadcrumb request %}
+
+    d.引入css和js
+        <link rel="stylesheet" href="{% static 'rbac/css/rbac.css' %} "/>
+        <script src="{% static 'rbac/js/rbac.js' %} "></script>
+11. 按钮控制
+    方式一：在前端页面判断
+        {% load rbac %}
+
+        {% if request|has_permission:'xxx:xxx_x_x' %}
+            <a>添加</a>
+        {% endif %}
+
+    方式二：在stark组件中通过基类的方式实现
+
+        权限类：
+            from django.conf import settings
+            from stark.service.stark import StarkConfig
+
+            class RbacPermission(object):
+
+                def get_add_btn(self):
+                    name = "%s:%s" %(self.site.namespace,self.get_add_url_name,)
+                    permission_dict = self.request.session.get(settings.PERMISSION_SESSION_KEY)
+                    if name in permission_dict:
+                        return super().get_add_btn()
+
+                def get_list_display(self):
+                    val = super().get_list_display()
+                    permission_dict = self.request.session.get(settings.PERMISSION_SESSION_KEY)
+                    edit_name = "%s:%s" %(self.site.namespace,self.get_change_url_name,)
+                    del_name = "%s:%s" %(self.site.namespace,self.get_del_url_name,)
+                    if edit_name not in permission_dict:
+                        val.remove(StarkConfig.display_edit)
+
+                    if del_name not in permission_dict:
+                        val.remove(StarkConfig.display_del)
+
+                    return val
+        配置类：
+
+            class CourseConfig(RbacPermission,StarkConfig):
+                list_display = ['id','name']
+
+
+            site.register(models.Course,CourseConfig)

@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+{% load rbac %}
+
+
+{% block css %}
+    <style>
+        .icon-area ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .icon-area ul li {
+            float: left;
+            padding: 10px;
+            padding-left: 0;
+            width: 80px;
+        }
+
+        .icon-area ul li i {
+            font-size: 18px;
+            margin-left: 5px;
+            color: #6d6565;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="luffy-container">
+        <form class="form-horizontal" method="post" novalidate>
+            {% csrf_token %}
+            <div class="form-group">
+                <label class="col-sm-2 control-label">角色名称：</label>
+                <div class="col-sm-4">
+                    {{ form.title }}
+                </div>
+                <div class="col-sm-2">
+                    <input type="submit" value="保 存" class="btn btn-primary">
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+
+{% endblock %}
+
+{% block js %}
+{% endblock %}

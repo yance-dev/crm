@@ -1,0 +1,58 @@
+{% extends 'layout.html' %}
+{% load rbac %}
+
+
+{% block css %}
+
+{% endblock %}
+
+{% block content %}
+    <div class="luffy-container">
+        <div class="panel panel-default">
+            <!-- Default panel contents -->
+
+            <div class="panel-body">
+                <form method="post" class="form-inline">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.title }}
+                        {{ form.title.errors.0 }}
+                    </div>
+                    <button type="submit" class="btn btn-success">添 加</button>
+                </form>
+            </div>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>角色名称</th>
+                    <th>权限数量</th>
+                    <th>选项</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for item in roles %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.permissions.count }}</td>
+                        <td style="width: 20%;">
+                            <a href="{% url 'rbac:role_edit' pk=item.id %}" style="display: inline-block;padding: 0 10px;">
+                                <i class="fa fa-edit" aria-hidden="true"></i>
+                            </a>
+
+                            <a href="{% url 'rbac:role_del' pk=item.id %}" style="color: #d9534f;display: inline-block;padding: 0 10px;">
+                                <i class="fa fa-trash-o" aria-hidden="true"></i>
+                            </a>
+                        </td>
+                    </tr>
+                {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+{% endblock %}

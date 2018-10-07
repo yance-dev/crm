@@ -1,0 +1,15 @@
+{% extends 'layout.html' %}
+{% block css %}
+
+
+{% endblock %}
+{% block content %}
+    <div >
+        <form method="post">
+            {% csrf_token %}
+            <p>是否确定要删除？</p>
+            <a href="{{ cancel_url }}" class="btn btn-default">取消</a>
+            <button type="submit" class="btn btn-danger">确 认</button>
+        </form>
+    </div>
+{% endblock %}

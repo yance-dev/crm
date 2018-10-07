@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="user">
+        <input type="text" name="pwd">
+        <input type="submit" value="提交">{{ msg }}
+    </form>
+</body>
+</html>

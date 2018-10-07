@@ -1,0 +1,76 @@
+使用stark组件需要完成一下几个步骤：
+1. 拷贝stark app到任何系统。
+2. 在目标project中注册stark app，如：
+    INSTALLED_APPS = [
+        ...
+        'stark.apps.StarkConfig',
+    ]
+3. 如果想要使用stark组件，则需要在目标app的根目录中创建 stark.py
+4. 配置路由信息
+    from stark.service.stark import site
+    urlpatterns = [
+        ...
+        url(r'^stark/', site.urls),
+    ]
+
+5. 接下来就可以使用stark组件进行快速增删改查,示例：
+    from crm import models
+    from stark.service.stark import site, StarkConfig
+    from django.utils.safestring import mark_safe
+    from django.conf.urls import url
+    from django.shortcuts import HttpResponse
+    from django.urls import reverse
+    from crm.config.class_list import ClassListConfig
+
+    class UserInfoConfig(StarkConfig):
+
+        def display_gender(self, row=None, header=False):
+            if header:
+                return '性别'
+            return row.get_gender_display()
+
+        def display_detail(self,row=None, header=False):
+            if header:
+                return '查看详细'
+            return mark_safe('<a href="%s">%s</a>' %(reverse('stark:crm_userinfo_detail',kwargs={'pk':row.id}),row.name,))
+
+        list_display = [
+            display_detail,
+            display_gender,
+            'phone',
+            'email',
+            'depart',
+            StarkConfig.display_edit,
+            StarkConfig.display_del
+        ]
+
+        def extra_url(self):
+            info = self.model_class._meta.app_label, self.model_class._meta.model_name
+
+            urlpatterns = [
+                url(r'^(?P<pk>\d+)/detail/$', self.wrapper(self.detail_view), name='%s_%s_detail' % info),
+            ]
+            return urlpatterns
+
+        def detail_view(self,request,pk):
+            """
+            查看详细页面
+            :param request:
+            :param pk:
+            :return:
+            """
+            return HttpResponse('详细页面...')
+
+        search_list = ['name','depart__title']
+
+
+    site.register(models.UserInfo, UserInfoConfig)
+    site.register(models.UserInfo, UserInfoConfig,prev='pri')
+
+6. 组件内部扩展：
+    list_display
+    get_list_display
+    action_list
+    order_by
+    model_form_class
+    ....
