@@ -15,11 +15,13 @@ Including another URLconf
 """
 from django.conf.urls import url,include
 from django.contrib import admin
+# 在这里引入了stark下site单例
 from stark.service.stark import site
 from crm import views
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    # 系统在读取urls.py中的url中时，调用单例下的urls方法
     url(r'^stark/', site.urls),
     url(r'^rbac/', include('rbac.urls',namespace='rbac')),
     url(r'^login/$', views.login),

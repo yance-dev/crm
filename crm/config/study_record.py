@@ -16,6 +16,8 @@ class StudyRecordModelForm(forms.ModelForm):
         fields = ['student','record','score','homework_note']
 
 class StudyRecordConfig(StarkConfig):
+    # list_display = ['record', 'score','homework']
+
 
     def get_urls(self):
         urlpatterns = [
